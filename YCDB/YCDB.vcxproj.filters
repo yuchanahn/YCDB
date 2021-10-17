@@ -23,5 +23,8 @@
     <ClInclude Include="server.hpp">
       <Filter>소스 파일</Filter>
     </ClInclude>
+    <ClInclude Include="packet_reader.hpp">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -146,6 +146,7 @@
     <ClCompile Include="YCDB.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="packet_reader.hpp" />
     <ClInclude Include="server.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -72,7 +72,7 @@ int server_main(int port, std::function<void(char*,int,int)> read_func) {
     while (1) {
         int nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
         if (error(lmd(nRcv == SOCKET_ERROR), elog, "Receive Error..")) break;
-        read_func(message, nRcv, clntSock);
+        read_func(message, nRcv, static_cast<int>(clntSock));
         //send(clntSock, message, (int)strlen(message), 0);
     }
 
