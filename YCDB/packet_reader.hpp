@@ -1,9 +1,9 @@
 #pragma once
 #include <unordered_map>
 #include <map>
+#include <vector>
 
-
-#pragma push(1)
+#pragma pack(push, 1)
 
 template <typename DATA_TYPE>
 struct packet_t
@@ -18,6 +18,6 @@ union upacket_t
 	DATA_TYPE data;
 	char buf[sizeof(DATA_TYPE)];
 };
-#pragma pop()
+#pragma pack(pop)
 
-std::map<size_t, std::unordered_map<size_t, char*>> DB_ROW;
+std::map<size_t, std::unordered_map<size_t, std::vector<char>>> DB_ROW;
