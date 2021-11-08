@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <winsock2.h>
+#include <thread>
 #elif __APPLE__
 #include "TargetConditionals.h"
 #elif __linux__
@@ -38,7 +39,7 @@ auto error = [](auto condition, auto log, auto str) {
     return b;
 };
 
-int server_main(int port, std::function<void(char*,int,int)> read_func) {
+int server_main(int port, std::function<void(char*, int, int)> read_func, std::function<void()> save) {
 #ifdef _WIN32
     WSADATA wsaData;
     SOCKET servSock, clntSock;
@@ -60,22 +61,45 @@ int server_main(int port, std::function<void(char*,int,int)> read_func) {
     error(lmd(listen(servSock, 2) == SOCKET_ERROR), elog, "Listen Error");
 
     int fromLen = sizeof(clntAddr);
-    clntSock = accept(servSock, (sockaddr*)&clntAddr, &fromLen);
 
-    if (!error(lmd(clntSock == INVALID_SOCKET), elog, "Accept Error")) {
-        printf("Start ...\n");
-    }
-    else {
-        closesocket(servSock);
-    }
+    bool loop = true;
+    bool read_start = false;
+    std::thread accept_th{ [&] {
+        while(loop){
+            clntSock = accept(servSock, (sockaddr*)&clntAddr, &fromLen);
+            if (!error(lmd(clntSock == INVALID_SOCKET), elog, "Accept Error")) {
+                printf("[DB] client_connect!\n");
+                read_start = true;
+            } else { closesocket(servSock); }
+        }
+    } };
 
-    while (1) {
-        int nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
-        if (error(lmd(nRcv == SOCKET_ERROR), elog, "Receive Error..")) break;
-        read_func(message, nRcv, static_cast<int>(clntSock));
+    std::thread cmd_thread{ [&] {
+        while (loop) {
+            int a;
+            printf("[DB]\n1. quit\n2. reset\n3. save\n");
+            std::cin >> a;
+            if (a == 1) { loop = false; }
+            if (a == 2) {}
+            if (a == 3) { 
+                save();
+            }
+        }
+    } };
+
+    while (loop) {
+        if (read_start) {
+            int nRcv = recv(clntSock, message, sizeof(message) - 1, 0);
+            if (error(lmd(nRcv == SOCKET_ERROR), elog, "Receive Error..")) {
+                printf("[DB] client_disconnect\n");
+                read_start = false;
+            }
+            read_func(message, nRcv, static_cast<int>(clntSock));
+        }
         //send(clntSock, message, (int)strlen(message), 0);
     }
-
+    accept_th.join();
+    cmd_thread.join();
     closesocket(clntSock);
     WSACleanup();
 #elif __linux__

@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YCDB", "YCDB\YCDB.vcxproj", "{C03D4FA7-04CD-473A-9E77-44DFB386E546}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YCDB_Client", "YCDB_Client\YCDB_Client.vcxproj", "{DE4A3A93-2771-40BE-AE54-442C3C86419F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{C03D4FA7-04CD-473A-9E77-44DFB386E546}.Release|x64.Build.0 = Release|x64
 		{C03D4FA7-04CD-473A-9E77-44DFB386E546}.Release|x86.ActiveCfg = Release|Win32
 		{C03D4FA7-04CD-473A-9E77-44DFB386E546}.Release|x86.Build.0 = Release|Win32
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Debug|x64.ActiveCfg = Debug|x64
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Debug|x64.Build.0 = Debug|x64
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Debug|x86.ActiveCfg = Debug|Win32
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Debug|x86.Build.0 = Debug|Win32
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Release|x64.ActiveCfg = Release|x64
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Release|x64.Build.0 = Release|x64
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Release|x86.ActiveCfg = Release|Win32
+		{DE4A3A93-2771-40BE-AE54-442C3C86419F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

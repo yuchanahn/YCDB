@@ -20,4 +20,4 @@ union upacket_t
 };
 #pragma pack(pop)
 
-std::map<size_t, std::unordered_map<size_t, std::vector<char>>> DB_ROW;
+std::map<int, std::unordered_map<int, std::vector<char>>> DB_ROW;
