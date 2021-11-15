@@ -9,34 +9,9 @@ struct p_test_1
     int num;
 };
 
-template <typename T>
-std::vector<char> set_byte(T& data, int token) {
-    auto b = ((char*)(&data));
-    std::vector<char> r;
-
-    int code = typeid(T).hash_code();
-
-    for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
-    for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
-
-    for (int i = 0; i < sizeof(T); i++) r.push_back(b[i]);
-    return r;
-}
-
-template <typename T>
-std::vector<char> get_packet_for(int token)
-{
-    std::vector<char> r;
-    int code = typeid(T).hash_code();
-    for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
-    for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
-    return r;
-}
-
 
 int main()
 {
-
     mem_db db;
 
     db.db_recv[typeid(p_test_1).hash_code()] = [](int user_number, char* buffer) {
@@ -45,7 +20,6 @@ int main()
     };
 
     db.connect(L"172.30.1.200", 61234);
-
     char msg[2024];
 
     std::thread read{ [&] {

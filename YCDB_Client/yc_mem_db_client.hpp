@@ -19,6 +19,14 @@ enum EPacketType : short
 {
 	get_data = 1,
 	update_data = 2,
+	has_id = 3,
+};
+
+struct check_id_t
+{
+	int key;
+	int id;
+	bool r;
 };
 
 union uIntChar
@@ -26,6 +34,40 @@ union uIntChar
 	int uint;
 	char uchar[sizeof(int)];
 };
+
+
+struct q_packet_t
+{
+	int code;
+	int token;
+	std::vector<char> data;
+};
+
+template <typename T>
+q_packet_t set_byte(T& data, int token) {
+	auto b = ((char*)(&data));
+	std::vector<char> r;
+
+	int code = typeid(T).hash_code();
+
+	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
+	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
+
+	for (int i = 0; i < sizeof(T); i++) r.push_back(b[i]);
+
+	return q_packet_t { code, token, r};
+}
+
+template <typename T>
+q_packet_t get_packet_for(int token)
+{
+	std::vector<char> r;
+	int code = typeid(T).hash_code();
+	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
+	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
+	return q_packet_t{ code, token, r };
+}
+
 class mem_db
 {
 public:
@@ -55,18 +97,27 @@ public:
 		WSACleanup();
 	}
 
-	void send_packet_update(std::vector<char> packet)
+	void send_packet_update(q_packet_t data)
 	{
+		auto& packet = data.data;
 		uIntChar itoc;
 		itoc.uint = packet.size() + sizeof(int) + sizeof(short);
 		EPacketType type = EPacketType::update_data;
 		packet.insert(packet.begin(), (char*)&type, (char*)&type + sizeof(short));
 		packet.insert(packet.begin(), itoc.uchar, itoc.uchar + sizeof(int));
+
+		db_save[data.code][data.token].is_update = false;
+
 		send(db_Socket, &packet[0], packet.size(), 0);
 	}
 
-	void send_packet_get(std::vector<char> packet)
+	void send_packet_get(q_packet_t data)
 	{
+		if (db_save[data.code][data.token].is_update) {
+			db_recv[data.code](data.token, (char*)&(db_save[data.code][data.token].data[0]));
+			return;
+		}
+		auto& packet = data.data;
 		uIntChar itoc;
 		itoc.uint = packet.size() + sizeof(int) + sizeof(short);
 		EPacketType type = EPacketType::get_data;
@@ -75,8 +126,29 @@ public:
 		send(db_Socket, &packet[0], packet.size(), 0);
 	}
 
+	void send_packet_id_check(q_packet_t data)
+	{
+		if (db_save[data.code][data.token].is_update) {
+			db_recv[data.code](data.token, (char*)&(db_save[data.code][data.token].data[0]));
+			return;
+		}
+		auto& packet = data.data;
+		uIntChar itoc;
+		itoc.uint = packet.size() + sizeof(int) + sizeof(short);
+		EPacketType type = EPacketType::has_id;
+		packet.insert(packet.begin(), (char*)&type, (char*)&type + sizeof(short));
+		packet.insert(packet.begin(), itoc.uchar, itoc.uchar + sizeof(int));
+		send(db_Socket, &packet[0], packet.size(), 0);
+	}
+
+
+	struct db_save_file_t {
+		bool is_update = false;
+		std::vector<char> data;
+	};
 	std::vector<char> buffer;
 	std::unordered_map<int, std::function<void(int, char*)>> db_recv;
+	std::unordered_map<int, std::unordered_map<int, db_save_file_t>> db_save;
 
 	void packet_reader_run(char* msg, int len)
 	{
@@ -89,6 +161,11 @@ public:
 			int start_id_idx = sizeof(int) + sizeof(int);
 			int key = *((int*)(&buffer[start_key_idx]));
 			int id = *((int*)(&buffer[start_id_idx]));
+
+			db_save[key][id].is_update = true;
+			db_save[key][id].data.resize((int)(buffer.size() - (start_id_idx + sizeof(int))));
+			std::copy(buffer.begin() + (start_id_idx + sizeof(int)), buffer.end(), db_save[key][id].data.begin());
+
 			db_recv[key](id, (char*)&(buffer[start_id_idx+sizeof(int)]));
 
 			std::vector<char> new_buffer;
