@@ -19,7 +19,7 @@ int main()
         printf("data[%d] : %d\n", user_number, data.num);
     };
 
-    db.connect(L"172.30.1.200", 61234);
+    db.connect(L"127.0.0.1", 61234);
     char msg[2024];
 
     std::thread read{ [&] {

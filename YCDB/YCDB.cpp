@@ -52,8 +52,6 @@ int main() {
 			int key = *((int*)(&buffer[start_key_idx]));
 			int id = *((int*)(&buffer[start_id_idx]));
 
-
-
 			if (packet_type == EPacketType::has_id) {
 				check_id_t p = check_id_t{
 					key, id, DB_ROW[key].find(id) != DB_ROW[key].end()
@@ -67,9 +65,8 @@ int main() {
 				r.insert(r.begin(), itoc.uchar, itoc.uchar + sizeof(int));
 				send(s, &r[0], r.size(), 0);
 			} else if (packet_type == EPacketType::update_data) {
-				int buffer_size = size.uint - start_id_idx;
 				DB_ROW[key][id].clear();
-				for (int i = 0; i < buffer_size; ++i) DB_ROW[key][id].push_back(buffer[start_id_idx + sizeof(int) + i]);
+				for (int i = start_id_idx + sizeof(int); i < size.uint; ++i) DB_ROW[key][id].push_back(buffer[i]);
 			} else if (packet_type == EPacketType::get_data) {
 				std::vector<char> r;
 				for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&key)[i]);
