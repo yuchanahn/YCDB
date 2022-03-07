@@ -15,18 +15,19 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 
+#define NOID_KEY 99999
+
 enum EPacketType : short
 {
 	get_data = 1,
 	update_data = 2,
-	has_id = 3,
+	no_id = 3,
 };
 
 struct check_id_t
 {
 	int key;
 	int id;
-	bool r;
 };
 
 union uIntChar
@@ -126,28 +127,13 @@ public:
 		send(db_Socket, &packet[0], packet.size(), 0);
 	}
 
-	void send_packet_id_check(q_packet_t data)
-	{
-		if (db_save[data.code][data.token].is_update) {
-			db_recv[data.code](data.token, (char*)&(db_save[data.code][data.token].data[0]));
-			return;
-		}
-		auto& packet = data.data;
-		uIntChar itoc;
-		itoc.uint = packet.size() + sizeof(int) + sizeof(short);
-		EPacketType type = EPacketType::has_id;
-		packet.insert(packet.begin(), (char*)&type, (char*)&type + sizeof(short));
-		packet.insert(packet.begin(), itoc.uchar, itoc.uchar + sizeof(int));
-		send(db_Socket, &packet[0], packet.size(), 0);
-	}
-
-
 	struct db_save_file_t {
 		bool is_update = false;
 		std::vector<char> data;
 	};
 	std::vector<char> buffer;
 	std::unordered_map<int, std::function<void(int, char*)>> db_recv;
+	std::function<void(check_id_t)> no_id;
 	std::unordered_map<int, std::unordered_map<int, db_save_file_t>> db_save;
 
 	void packet_reader_run(char* msg, int len)
@@ -162,11 +148,17 @@ public:
 			int key = *((int*)(&buffer[start_key_idx]));
 			int id = *((int*)(&buffer[start_id_idx]));
 
-			db_save[key][id].is_update = true;
-			db_save[key][id].data.resize((int)(buffer.size() - (start_id_idx + sizeof(int))));
-			std::copy(buffer.begin() + (start_id_idx + sizeof(int)), buffer.end(), db_save[key][id].data.begin());
+			if (key == NOID_KEY) {
+				no_id(*((check_id_t*)(&buffer[start_id_idx])));
+			}
+			else {
+				db_save[key][id].is_update = true;
+				db_save[key][id].data.resize((int)(buffer.size() - (start_id_idx + sizeof(int))));
+				std::copy(buffer.begin() + (start_id_idx + sizeof(int)), buffer.end(), db_save[key][id].data.begin());
+				db_recv[key](id, (char*)&(buffer[start_id_idx + sizeof(int)]));
+			}
 
-			db_recv[key](id, (char*)&(buffer[start_id_idx+sizeof(int)]));
+
 
 			std::vector<char> new_buffer;
 			if (buffer.size() > size.uint) {

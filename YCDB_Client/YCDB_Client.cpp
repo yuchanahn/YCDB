@@ -18,6 +18,9 @@ int main()
         auto data = *((p_test_1*)buffer);
         printf("data[%d] : %d\n", user_number, data.num);
     };
+    db.no_id = [](check_id_t c) {
+        printf("no id To [%d][%d]\n", c.key, c.id);
+    };
 
     db.connect(L"127.0.0.1", 61234);
     char msg[2024];
@@ -35,8 +38,8 @@ int main()
         p_test_1 p;
         std::cin >> p.num;
         if (p.num == -99) break;
-        if (p.num != -1) db.send_packet_update(set_byte(p, 1));
-        db.send_packet_get(get_packet_for<p_test_1>(1));
+        if (p.num != -1) db.send_packet_update(set_byte(p, 3));
+        db.send_packet_get(get_packet_for<p_test_1>(3));
     }
 
     db.relese();
