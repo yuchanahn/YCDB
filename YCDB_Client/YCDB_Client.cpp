@@ -19,7 +19,7 @@ int main()
         printf("data[%d] : %d\n", user_number, data.num);
     };
     db.no_id = [](check_id_t c) {
-        printf("no id To [%d][%d]\n", c.key, c.id);
+        printf("no id To [%d][%lld]\n", c.key, c.id);
     };
 
     db.connect(L"127.0.0.1", 61234);

@@ -20,7 +20,7 @@ enum EPacketType : short
 struct check_id_t
 {
 	int key;
-	int id;
+	__int64 id;
 };
 
 union uIntChar
@@ -95,7 +95,7 @@ void load_to_directory() {
 					fileName.push_back(path[i]);
 				}
 			}
-			int id = std::stoi(fileName);
+			__int64 id = _atoi64(fileName.c_str());
 			std::ifstream ist(key_.path().string() + "\\" + fileName);
 			while (!ist.eof())
 			{
@@ -127,10 +127,10 @@ int main() {
 
 			EPacketType packet_type = static_cast<EPacketType>(*((short*)(&buffer[start])));
 			int key = *((int*)(&buffer[start_key_idx]));
-			int id = *((int*)(&buffer[start_id_idx]));
+			__int64 id = *((__int64*)(&buffer[start_id_idx]));
 			if (packet_type == EPacketType::update_data) {
 				DB_ROW[key][id].clear();
-				for (int i = start_id_idx + sizeof(int); i < size.uint; ++i) DB_ROW[key][id].push_back(buffer[i]);
+				for (int i = start_id_idx + sizeof(__int64); i < size.uint; ++i) DB_ROW[key][id].push_back(buffer[i]);
 			} else if (packet_type == EPacketType::get_data) {
 				if (DB_ROW[key].find(id) == DB_ROW[key].end()) {
 					check_id_t p{ key ,id};
@@ -145,7 +145,7 @@ int main() {
 				} else {
 					std::vector<char> r;
 					for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&key)[i]);
-					for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&id)[i]);
+					for (int i = 0; i < sizeof(__int64); i++) r.push_back(((char*)&id)[i]);
 					for (auto& i : DB_ROW[key][id]) { r.push_back(i); }
 					uIntChar itoc;
 					itoc.uint = r.size() + sizeof(int);

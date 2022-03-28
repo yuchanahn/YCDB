@@ -27,7 +27,7 @@ enum EPacketType : short
 struct check_id_t
 {
 	int key;
-	int id;
+	__int64 id;
 };
 
 union uIntChar
@@ -40,19 +40,19 @@ union uIntChar
 struct q_packet_t
 {
 	int code;
-	int token;
+	__int64 token;
 	std::vector<char> data;
 };
 
 template <typename T>
-q_packet_t set_byte(T& data, int token) {
+q_packet_t set_byte(T& data, __int64 token) {
 	auto b = ((char*)(&data));
 	std::vector<char> r;
 
 	int code = typeid(T).hash_code();
 
 	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
-	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
+	for (int i = 0; i < sizeof(__int64); i++) r.push_back(((char*)&token)[i]);
 
 	for (int i = 0; i < sizeof(T); i++) r.push_back(b[i]);
 
@@ -60,12 +60,12 @@ q_packet_t set_byte(T& data, int token) {
 }
 
 template <typename T>
-q_packet_t get_packet_for(int token)
+q_packet_t get_packet_for(__int64 token)
 {
 	std::vector<char> r;
 	int code = typeid(T).hash_code();
 	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&code)[i]);
-	for (int i = 0; i < sizeof(int); i++) r.push_back(((char*)&token)[i]);
+	for (int i = 0; i < sizeof(__int64); i++) r.push_back(((char*)&token)[i]);
 	return q_packet_t{ code, token, r };
 }
 
@@ -132,9 +132,9 @@ public:
 		std::vector<char> data;
 	};
 	std::vector<char> buffer;
-	std::unordered_map<int, std::function<void(int, char*)>> db_recv;
+	std::unordered_map<int, std::function<void(__int64, char*)>> db_recv;
 	std::function<void(check_id_t)> no_id;
-	std::unordered_map<int, std::unordered_map<int, db_save_file_t>> db_save;
+	std::unordered_map<int, std::unordered_map<__int64, db_save_file_t>> db_save;
 
 	void packet_reader_run(char* msg, int len)
 	{
@@ -146,19 +146,17 @@ public:
 			int start_key_idx = sizeof(int);
 			int start_id_idx = sizeof(int) + sizeof(int);
 			int key = *((int*)(&buffer[start_key_idx]));
-			int id = *((int*)(&buffer[start_id_idx]));
+			__int64 id = *((__int64*)(&buffer[start_id_idx]));
 
 			if (key == NOID_KEY) {
 				no_id(*((check_id_t*)(&buffer[start_id_idx])));
 			}
 			else {
 				db_save[key][id].is_update = true;
-				db_save[key][id].data.resize((int)(buffer.size() - (start_id_idx + sizeof(int))));
-				std::copy(buffer.begin() + (start_id_idx + sizeof(int)), buffer.end(), db_save[key][id].data.begin());
-				db_recv[key](id, (char*)&(buffer[start_id_idx + sizeof(int)]));
+				db_save[key][id].data.resize((int)(buffer.size() - (start_id_idx + sizeof(__int64))));
+				std::copy(buffer.begin() + (start_id_idx + sizeof(__int64)), buffer.end(), db_save[key][id].data.begin());
+				db_recv[key](id, (char*)&(buffer[start_id_idx + sizeof(__int64)]));
 			}
-
-
 
 			std::vector<char> new_buffer;
 			if (buffer.size() > size.uint) {
